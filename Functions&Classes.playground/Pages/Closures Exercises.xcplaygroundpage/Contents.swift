@@ -17,6 +17,16 @@ The thing to keep in mind for the moment is that you already have an intuition a
 
 */
 
+// a closure that has no parameters and doesn't return anything
+func check(){
+    var b = 1
+    var doSomething: () -> (Void) = {
+        b++
+    }
+    doSomething()
+    b
+}
+check()
 
 // a closure that has no parameters and return a String
 var hello: () -> (String) = {
