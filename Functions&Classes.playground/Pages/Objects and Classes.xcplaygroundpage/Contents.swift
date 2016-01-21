@@ -1,138 +1,119 @@
-//: ## Objects and Classes
+//: ## Functions and Closures
 //:
-//: Use `class` followed by the class’s name to create a class. A property declaration in a class is written the same way as a constant or variable declaration, except that it is in the context of a class. Likewise, method and function declarations are written the same way.
+//: Use `func` to declare a function. Call a function by following its name with a list of arguments in parentheses. Use `->` to separate the parameter names and types from the function’s return type.
 //:
-class Shape {
-    var numberOfSides = 0
-    func simpleDescription() -> String {
-        return "A shape with \(numberOfSides) sides."
-    }
+func greet(name: String, day: String) -> String {
+    return "Hello \(name), today is \(day)."
 }
+greet("Bob", day: "Tuesday")
 
-//: > **Experiment**:
-//: > Add a constant property with `let`, and add another method that takes an argument.
+///: Use a tuple to make a compound value—for example, to return multiple values from a function. The elements of a tuple can be referred to either by name or by number.
 //:
-//: Create an instance of a class by putting parentheses after the class name. Use dot syntax to access the properties and methods of the instance.
-//:
-var shape = Shape()
-shape.numberOfSides = 7
-var shapeDescription = shape.simpleDescription()
-
-//: This version of the `Shape` class is missing something important: an initializer to set up the class when an instance is created. Use `init` to create one.
-//:
-class NamedShape {
-    var numberOfSides: Int = 0
-    var name: String
-
-    init(name: String) {
-       self.name = name
-    }
-
-    func simpleDescription() -> String {
-       return "A shape with \(numberOfSides) sides."
-    }
-}
-
-//: Notice how `self` is used to distinguish the `name` property from the `name` argument to the initializer. The arguments to the initializer are passed like a function call when you create an instance of the class. Every property needs a value assigned—either in its declaration (as with `numberOfSides`) or in the initializer (as with `name`).
-//:
-//: Use `deinit` to create a deinitializer if you need to perform some cleanup before the object is deallocated.
-//:
-//: Subclasses include their superclass name after their class name, separated by a colon. There is no requirement for classes to subclass any standard root class, so you can include or omit a superclass as needed.
-//:
-//: Methods on a subclass that override the superclass’s implementation are marked with `override`—overriding a method by accident, without `override`, is detected by the compiler as an error. The compiler also detects methods with `override` that don’t actually override any method in the superclass.
-//:
-class Square: NamedShape {
-    var sideLength: Double
-
-    init(sideLength: Double, name: String) {
-        self.sideLength = sideLength
-        super.init(name: name)
-        numberOfSides = 4
-    }
-
-    func area() ->  Double {
-        return sideLength * sideLength
-    }
-
-    override func simpleDescription() -> String {
-        return "A square with sides of length \(sideLength)."
-    }
-}
-let test = Square(sideLength: 5.2, name: "my test square")
-test.area()
-test.simpleDescription()
-
-//: > **Experiment**:
-//: > Make another subclass of `NamedShape` called `Circle` that takes a radius and a name as arguments to its initializer. Implement an `area()` and a `simpleDescription()` method on the `Circle` class.
-//:
-//: In addition to simple properties that are stored, properties can have a getter and a setter.
-//:
-class EquilateralTriangle: NamedShape {
-    var sideLength: Double = 0.0
-
-    init(sideLength: Double, name: String) {
-        self.sideLength = sideLength
-        super.init(name: name)
-        numberOfSides = 3
-    }
-
-    var perimeter: Double {
-        get {
-             return 3.0 * sideLength
+func calculateStatistics(scores: [Int]) -> (min: Int, max: Int, sum: Int) {
+    var min = scores[0]
+    var max = scores[0]
+    var sum = 0
+    
+    for score in scores {
+        if score > max {
+            max = score
+        } else if score < min {
+            min = score
         }
-        set {
-            sideLength = newValue / 3.0
+        sum += score
+    }
+    
+    return (min, max, sum)
+}
+let statistics = calculateStatistics([5, 3, 100, 3, 9])
+print(statistics.sum)
+print(statistics.2)
+
+//: Functions can also take a variable number of arguments, collecting them into an array.
+//:
+func sumOf(numbers: Int...) -> Int {
+    var sum = 0
+    for number in numbers {
+        sum += number
+    }
+    return sum
+}
+sumOf()
+sumOf(42, 597, 12)
+
+//: Functions can be nested. Nested functions have access to variables that were declared in the outer function. You can use nested functions to organize the code in a function that is long or complex.
+//:
+func returnFifteen() -> Int {
+    var y = 10
+    func add() {
+        y += 5
+    }
+    add()
+    return y
+}
+returnFifteen()
+
+//: Functions are a first-class type. This means that a function can return another function as its value.
+//:
+func makeIncrementer() -> ((Int) -> Int) {
+    func addOne(number: Int) -> Int {
+        return 1 + number
+    }
+    return addOne
+}
+var increment = makeIncrementer()
+increment(7)
+
+//: A function can take another function as one of its arguments.
+//:
+func hasAnyMatches(list: [Int], condition: (Int) -> Bool) -> Bool {
+    for item in list {
+        if condition(item) {
+            return true
         }
     }
-
-    override func simpleDescription() -> String {
-        return "An equilateral triangle with sides of length \(sideLength)."
-    }
+    return false
 }
-var triangle = EquilateralTriangle(sideLength: 3.1, name: "a triangle")
-print(triangle.perimeter)
-triangle.perimeter = 9.9
-print(triangle.sideLength)
-
-//: In the setter for `perimeter`, the new value has the implicit name `newValue`. You can provide an explicit name in parentheses after `set`.
-//:
-//: Notice that the initializer for the `EquilateralTriangle` class has three different steps:
-//:
-//: 1. Setting the value of properties that the subclass declares.
-//:
-//: 1. Calling the superclass’s initializer.
-//:
-//: 1. Changing the value of properties defined by the superclass. Any additional setup work that uses methods, getters, or setters can also be done at this point.
-//:
-//: If you don’t need to compute the property but still need to provide code that is run before and after setting a new value, use `willSet` and `didSet`. The code you provide is run any time the value changes outside of an initializer. For example, the class below ensures that the side length of its triangle is always the same as the side length of its square.
-//:
-class TriangleAndSquare {
-    var triangle: EquilateralTriangle {
-        willSet {
-            square.sideLength = newValue.sideLength
-        }
-    }
-    var square: Square {
-        willSet {
-            triangle.sideLength = newValue.sideLength
-        }
-    }
-    init(size: Double, name: String) {
-        square = Square(sideLength: size, name: name)
-        triangle = EquilateralTriangle(sideLength: size, name: name)
-    }
+func lessThanTen(number: Int) -> Bool {
+    return number < 10
 }
-var triangleAndSquare = TriangleAndSquare(size: 10, name: "another test shape")
-print(triangleAndSquare.square.sideLength)
-print(triangleAndSquare.triangle.sideLength)
-triangleAndSquare.square = Square(sideLength: 50, name: "larger square")
-print(triangleAndSquare.triangle.sideLength)
+var numbers = [20, 19, 7, 12]
+hasAnyMatches(numbers, condition: lessThanTen)
 
-//: When working with optional values, you can write `?` before operations like methods, properties, and subscripting. If the value before the `?` is `nil`, everything after the `?` is ignored and the value of the whole expression is `nil`. Otherwise, the optional value is unwrapped, and everything after the `?` acts on the unwrapped value. In both cases, the value of the whole expression is an optional value.
-//:
-let optionalSquare: Square? = Square(sideLength: 2.5, name: "optional square")
-let sideLength = optionalSquare?.sideLength
+//: # Functions Exercises
+/*:
+### 1
+Write a function named min2 that takes two Int values, a and b, and returns the smallest one.
+*/
+/*:
+### 2
+Write a function that takes an Int and returns it’s last digit. Name the function lastDigit.
+*/
+/*:
+### 3
+Write a function named first that takes an Int named N and returns an array with the first N numbers starting from 1.
+*/
+/*:
+### 4 Countdown
+Write a function named countdown that takes a number N. The function should print the numbers from N to 1 with a one second pause in between and then write GO! in the end. To make the computer wait for one second call thesleep function from the standard library. The sleep function takes one parameter, the number of seconds to sleep.*/
 
+/*:
+### 5Primes
+Implement the following functions. The divides function returns true if a is divisible by b and false otherwise. The countDivisors function should use the divides function to return the number of divisors of number. The isPrime function should use the countDivisors function to determine if number is prime.*/
 
+/*:
+#### Examples:
+divides(3, 2) // false - 3 is not divisible by 2
+divides(6, 3) // true - 6 is divisible by 3
 
-//: [Previous](@previous) | [Next](@next)
+countDivisors(2) // 2 - 1 and 2
+countDivisors(6) // 4 - 1, 2, 3 and 6
+countDivisors(12) // 6 - 1, 2, 3, 4, 6 and 12
+
+isPrime(2) // true
+isPrime(3) // true
+isPrime(10) // false
+isPrime(13) // true
+
+*/
+//: | [Next](@next)
